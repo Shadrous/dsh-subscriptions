@@ -2,7 +2,7 @@
 
 > Fork of the upstream `@goodandready/dsh-subscriptions` plugin for DeepSeek Harness. It keeps the upstream package name so DSH can replace the npm package in place, but it is **not published to npm**. Install it from this GitHub repository or link a local checkout.
 
-**Current fork version:** `0.6.73-local.7` (based on upstream `0.6.72`).
+**Current fork version:** `0.6.73-local.8` (based on upstream `0.6.72`).
 
 <p align="center">
   <a href="https://github.com/Shadrous/dsh-subscriptions"><img src="https://img.shields.io/badge/GitHub-Shadrous%2Fdsh--subscriptions-181717.svg?style=for-the-badge&logo=github&labelColor=1a1a2e" alt="GitHub repository"></a>
@@ -19,7 +19,8 @@ The upstream plugin is excellent; this fork keeps the same vendor bridges and ad
 
 - **Grok prompt caching** — a stable `prompt_cache_key` per session and `input_tokens_details.cached_tokens` parsing, so Grok cache hits show up instead of staying at 0%.
 - **Antigravity login** — uses the public AGY OAuth client with the `http://localhost:51121/oauth-callback` redirect, and the loopback listener binds both IPv4 and IPv6 (`localhost` is often `::1` on Fedora).
-- **Antigravity quota** — reads the real quota-summary buckets (Gemini and Claude/GPT `5h`/weekly windows) instead of collapsing the account to a single synthetic 0%.
+- **Antigravity quota** — reads the real quota-summary buckets (Gemini and Claude/GPT `5h`/weekly windows) instead of collapsing the account to a single synthetic 0%. A `0%` reading is a live “full” reading; hover the pill for the reset countdown.
+- **Cost-meter pricing** — registers Antigravity model price references with `dsh-cost-meter`, so Gemini/Claude/GPT calls are priced instead of showing “No priced cost”. Existing user overrides win, and new calls are priced automatically.
 - **Header pill** — follows the open chat's selected model, shows only the caps the vendor actually reports, orders them `5h → W → M`, refreshes while visible, and **disappears when the chat is not on a subscription provider**.
 - **Grok cap labels** — the weekly cap is labelled `W`, not the structural `config` key.
 - **Resilient startup** — the optional SOCKS proxy client loads lazily, so a missing `socks` install can no longer make the whole plugin inactive and unhook every provider.
@@ -139,6 +140,12 @@ The pill is intentionally scoped to subscription chats:
 Click the pill for the account modal: connected accounts, cooldowns, quota bars, and a shortcut to the settings card.
 
 ---
+
+## Quota and cost readings
+
+- **Quota** comes from the vendor's live quota summary. Antigravity reports four buckets (Gemini and Claude/GPT, each with `5h` and weekly). A `0%` pill value means 0% used / 100% remaining, not missing data; hover the pill to see the reset countdown.
+- **Cost** is owned by `dsh-cost-meter`, not this plugin. When both plugins are installed, this fork registers Antigravity model price references (`antigravity:gemini-3.8-flash-high` → `google:gemini-3.8-flash`, and equivalents for the other Gemini/Claude models). New calls are priced automatically, and existing user price overrides are preserved.
+- Cost-meter does not retroactively reprice recorded calls. To update the cost of previous Antigravity calls, open **Settings → Cost → Historical pricing**, choose `antigravity:gemini-3.8-flash-high`, and run **Recalculate this model**. The operation keeps the original amounts and writes a ledger backup.
 
 ## Supported built-in providers
 

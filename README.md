@@ -1,6 +1,6 @@
 # 📦 @goodandready/dsh-subscriptions
 
-> Local fork of 0.6.72 (`0.6.73-local.2`). Keeps the Grok `prompt_cache_key` / `cached_tokens` fix. Antigravity Connect uses the public client on `localhost:51121`. The header pill follows the open chat's selected model instead of the last subscription request.
+> Local fork of 0.6.72 (`0.6.73-local.6`). Keeps the Grok `prompt_cache_key` / `cached_tokens` fix. Antigravity Connect uses the public client on `localhost:51121`. The header pill follows the open chat's selected model and shows only the caps that vendor actually reports (`5h` / `W` / `M`). Run `pnpm install --prod` in this directory after cloning so the linked package can resolve `socks` and `undici`.
 
 <div align="center">
 

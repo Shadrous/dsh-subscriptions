@@ -2,7 +2,7 @@
 
 > Fork of the upstream `@goodandready/dsh-subscriptions` plugin for DeepSeek Harness. It keeps the upstream package name so DSH can replace the npm package in place, but it is **not published to npm**. Install it from this GitHub repository or link a local checkout.
 
-**Current fork version:** `0.6.73-local.8` (based on upstream `0.6.72`).
+**Current fork version:** `0.6.73-local.9` (based on upstream `0.6.72`).
 
 <p align="center">
   <a href="https://github.com/Shadrous/dsh-subscriptions"><img src="https://img.shields.io/badge/GitHub-Shadrous%2Fdsh--subscriptions-181717.svg?style=for-the-badge&logo=github&labelColor=1a1a2e" alt="GitHub repository"></a>
@@ -190,6 +190,8 @@ dsh-subscriptions:
   accountMaxConcurrency: 2
   maxQueueSize: 20
   queueTimeoutMs: 30000
+  streamConnectTimeoutMs: 180000  # wait for response headers (large/high-reasoning prompts)
+  streamIdleTimeoutMs: 60000      # abort only when a connected stream goes silent this long
   accounts:
     codex:
       - ref: CODEX_OAUTH_1
@@ -241,6 +243,10 @@ That was an upstream parsing bug fixed in this fork. Update the checkout (`git p
 **The pill is missing on this chat**
 
 That is expected when the selected model is not from this plugin (for example `deepseek-flash`). Switch the model picker to a subscription provider and it reappears.
+
+**A long turn fails with `The operation was aborted due to timeout`**
+
+This fork used one 30s deadline for both the wait before the first response byte and the idle timeout after the stream connected. A large prompt with high reasoning effort can legitimately take longer than that to produce its first byte, so the request was killed before the model answered. The connect budget is now `streamConnectTimeoutMs` (default 180s) and is separate from `streamIdleTimeoutMs` (default 60s). Raise `streamConnectTimeoutMs` if your provider is slower; lower it if you want a stalled connection to fail sooner. A timeout is not retried, because retrying only doubles the wait.
 
 ---
 

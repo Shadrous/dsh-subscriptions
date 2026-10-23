@@ -2,7 +2,7 @@
 
 > Fork of the upstream `@goodandready/dsh-subscriptions` plugin for DeepSeek Harness. It keeps the upstream package name so DSH can replace the npm package in place, but it is **not published to npm**. Install it from this GitHub repository or link a local checkout.
 
-**Current fork version:** `0.6.73-local.12` (based on upstream `0.6.72`).
+**Current fork version:** `0.6.73-local.13` (based on upstream `0.6.72`).
 
 <p align="center">
   <a href="https://github.com/Shadrous/dsh-subscriptions"><img src="https://img.shields.io/badge/GitHub-Shadrous%2Fdsh--subscriptions-181717.svg?style=for-the-badge&logo=github&labelColor=1a1a2e" alt="GitHub repository"></a>
@@ -20,7 +20,7 @@ The upstream plugin is excellent; this fork keeps the same vendor bridges and ad
 - **Grok prompt caching** — a stable `prompt_cache_key` per session and `input_tokens_details.cached_tokens` parsing, so Grok cache hits show up instead of staying at 0%.
 - **Antigravity login** — uses the public AGY OAuth client with the `http://localhost:51121/oauth-callback` redirect, and the loopback listener binds both IPv4 and IPv6 (`localhost` is often `::1` on Fedora).
 - **Antigravity quota** — reads the real quota buckets from the same daily backend the Antigravity CLI uses. It merges `retrieveUserQuotaSummary` (Claude/GPT weekly + 5h) with `retrieveUserQuota` (live per-model buckets, including the Gemini 5h window), because Google sometimes drops the Gemini group from the summary response. A `0%` reading is a live “full” reading; hover the pill for the reset countdown.
-- **Gemini thinking effort** — `Gemini 3.8 Flash` and `Gemini 3.7 Flash` appear once in the picker with a low/medium/high thinking selector. Legacy ids such as `gemini-3.8-flash-high` still work for existing chats; new requests map the selected effort to the model's `-tiered` backend id.
+- **Gemini thinking effort** — `Gemini 3.8 Flash`, `Gemini 3.7 Flash`, and `Gemini 3.5 Flash` appear once in the picker with a low/medium/high thinking selector. The catalog's repeated alias rows (including four identical `Gemini 3.5 Flash Lite` entries) are deduplicated by display name. Legacy ids such as `gemini-3.8-flash-high` still work for existing chats; new requests map the selected effort to the backend model or `-tiered` id that encodes it.
 - **Cost-meter pricing** — registers Antigravity model price references with `dsh-cost-meter`, so Gemini/Claude/GPT calls are priced instead of showing “No priced cost”. Existing user overrides win, and new calls are priced automatically.
 - **Header pill** — follows the open chat's selected model, shows only the caps the vendor actually reports, orders them `5h → W → M`, refreshes while visible, and **disappears when the chat is not on a subscription provider**.
 - **Grok cap labels** — the weekly cap is labelled `W`, not the structural `config` key.
@@ -260,7 +260,7 @@ Google's `retrieveUserQuotaSummary` response has started omitting the Gemini gro
 
 **The model picker still shows `gemini-3.8-flash-high` / `-medium` / `-low` as separate models**
 
-Those are the upstream catalog ids. The fork now collapses `Gemini 3.8 Flash` and `Gemini 3.7 Flash` into one picker entry with a low/medium/high thinking selector, and maps the selected effort to the `-tiered` backend id. Existing chats pinned to a suffixed id keep working. If your picker still shows the old entries, restart `dsh web` so the host reloads the vendor module; a browser refresh alone is not enough.
+Those are the upstream catalog ids. The fork now collapses `Gemini 3.8 Flash`, `Gemini 3.7 Flash`, and `Gemini 3.5 Flash` into one entry each with a low/medium/high thinking selector, maps the selected effort to the backend id that encodes it, and deduplicates rows that share a display name (the catalog lists `Gemini 3.5 Flash Lite` four times under different legacy ids). Existing chats pinned to a suffixed id keep working. If your picker still shows the old entries, restart `dsh web` so the host reloads the vendor module and click **Sync Models**; a browser refresh alone is not enough.
 
 ---
 

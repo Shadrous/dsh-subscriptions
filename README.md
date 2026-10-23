@@ -2,7 +2,7 @@
 
 > Fork of the upstream `@goodandready/dsh-subscriptions` plugin for DeepSeek Harness. It keeps the upstream package name so DSH can replace the npm package in place, but it is **not published to npm**. Install it from this GitHub repository or link a local checkout.
 
-**Current fork version:** `0.6.73-local.13` (based on upstream `0.6.72`).
+**Current fork version:** `0.6.73-local.14` (based on upstream `0.6.72`).
 
 <p align="center">
   <a href="https://github.com/Shadrous/dsh-subscriptions"><img src="https://img.shields.io/badge/GitHub-Shadrous%2Fdsh--subscriptions-181717.svg?style=for-the-badge&logo=github&labelColor=1a1a2e" alt="GitHub repository"></a>
@@ -249,6 +249,10 @@ That is expected when the selected model is not from this plugin (for example `d
 **A long turn fails with `The operation was aborted due to timeout`**
 
 This fork used one 30s deadline for both the wait before the first response byte and the idle timeout after the stream connected. A large prompt with high reasoning effort can legitimately take longer than that to produce its first byte, so the request was killed before the model answered. The connect budget is now `streamConnectTimeoutMs` (default 180s) and is separate from `streamIdleTimeoutMs` (default 60s). Raise `streamConnectTimeoutMs` if your provider is slower; lower it if you want a stalled connection to fail sooner. A timeout is not retried, because retrying only doubles the wait.
+
+**Claude thinking fails with `max_tokens` must be greater than `thinking.budget_tokens`**
+
+Antigravity translates the Gemini-shaped request to Anthropic for Claude models. The plugin used to send a thinking budget (8192 for medium) while letting the backend default `max_tokens` to the same 8192. `googleContents` now sets `maxOutputTokens` to at least `thinkingBudget + 8192`, so the budget always leaves room for the answer.
 
 **A turn says `HTTP 500` and mentions `QUOTA_SERVICE`, but the quota pill shows plenty left**
 

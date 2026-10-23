@@ -2,7 +2,7 @@
 
 > Fork of the upstream `@goodandready/dsh-subscriptions` plugin for DeepSeek Harness. It keeps the upstream package name so DSH can replace the npm package in place, but it is **not published to npm**. Install it from this GitHub repository or link a local checkout.
 
-**Current fork version:** `0.6.73-local.11` (based on upstream `0.6.72`).
+**Current fork version:** `0.6.73-local.12` (based on upstream `0.6.72`).
 
 <p align="center">
   <a href="https://github.com/Shadrous/dsh-subscriptions"><img src="https://img.shields.io/badge/GitHub-Shadrous%2Fdsh--subscriptions-181717.svg?style=for-the-badge&logo=github&labelColor=1a1a2e" alt="GitHub repository"></a>
@@ -145,7 +145,7 @@ Click the pill for the account modal: connected accounts, cooldowns, quota bars,
 ## Quota and cost readings
 
 - **Quota** comes from the vendor's live quota buckets on `daily-cloudcode-pa.googleapis.com` — the same host the stream and the Antigravity CLI use. `retrieveUserQuotaSummary` normally reports the Claude/GPT weekly and 5-hour windows; Google has started returning that group without the Gemini group for some consumer accounts. The plugin therefore also reads `retrieveUserQuota`, whose per-model buckets still carry the live Gemini 5-hour window, and merges the two sources. The pill filters the result to the open model's family. A `0%` pill value means 0% used / 100% remaining, not missing data; hover the pill for the reset countdown.
-- If Google's summary response returns a Gemini weekly bucket again, the merge keeps it automatically. While the summary omits Gemini, only the live Gemini 5-hour cap is available; the weekly Gemini cap is not exposed by that API, so the CLI's weekly number may come from its own quota cache.
+- While the summary omits Gemini, the plugin fills the missing weekly cap from the local Antigravity CLI's read-only `agy -p /quota` output, cached for five minutes (`DSH_SUBSCRIPTIONS_CLI_QUOTA=0` disables it). If the CLI is absent, only the live Gemini 5-hour cap is shown. If Google's summary response returns a Gemini weekly bucket again, that live value wins automatically.
 - **Cost** is owned by `dsh-cost-meter`, not this plugin. When both plugins are installed, this fork registers Antigravity model price references (`antigravity:gemini-3.8-flash-high` → `google:gemini-3.8-flash`, and equivalents for the other Gemini/Claude models). New calls are priced automatically, and existing user price overrides are preserved.
 - Cost-meter does not retroactively reprice recorded calls. To update the cost of previous Antigravity calls, open **Settings → Cost → Historical pricing**, choose `antigravity:gemini-3.8-flash-high`, and run **Recalculate this model**. The operation keeps the original amounts and writes a ledger backup.
 
@@ -256,7 +256,7 @@ That is a Google **quota-service outage**, not an exhausted subscription. The 50
 
 **The Gemini weekly cap disappeared from the pill**
 
-Google's `retrieveUserQuotaSummary` response has started omitting the Gemini group for some consumer accounts, leaving only Claude/GPT. The plugin now merges that summary with `retrieveUserQuota`, whose per-model buckets still expose the Gemini 5-hour window, so the pill recovers the live 5-hour cap. The weekly Gemini cap is not in either response while the summary is incomplete; it reappears automatically when Google restores the group.
+Google's `retrieveUserQuotaSummary` response has started omitting the Gemini group for some consumer accounts, leaving only Claude/GPT. The plugin merges that summary with `retrieveUserQuota`, whose per-model buckets still expose the live Gemini 5-hour window. For the missing weekly cap it falls back to the local Antigravity CLI's read-only `agy -p /quota` output, cached for five minutes; the CLI still reports the weekly window. If the CLI is not installed, only the 5-hour cap can be shown. Set `DSH_SUBSCRIPTIONS_CLI_QUOTA=0` to disable the CLI fallback entirely. If Google restores the Gemini group in the summary, that live value wins automatically.
 
 **The model picker still shows `gemini-3.8-flash-high` / `-medium` / `-low` as separate models**
 

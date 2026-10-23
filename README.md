@@ -2,7 +2,7 @@
 
 > Fork of the upstream `@goodandready/dsh-subscriptions` plugin for DeepSeek Harness. It keeps the upstream package name so DSH can replace the npm package in place, but it is **not published to npm**. Install it from this GitHub repository or link a local checkout.
 
-**Current fork version:** `0.6.73-local.14` (based on upstream `0.6.72`).
+**Current fork version:** `0.6.73-local.15` (based on upstream `0.6.72`).
 
 <p align="center">
   <a href="https://github.com/Shadrous/dsh-subscriptions"><img src="https://img.shields.io/badge/GitHub-Shadrous%2Fdsh--subscriptions-181717.svg?style=for-the-badge&logo=github&labelColor=1a1a2e" alt="GitHub repository"></a>

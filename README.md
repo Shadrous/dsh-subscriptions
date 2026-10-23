@@ -2,7 +2,7 @@
 
 > Fork of the upstream `@goodandready/dsh-subscriptions` plugin for DeepSeek Harness. It keeps the upstream package name so DSH can replace the npm package in place, but it is **not published to npm**. Install it from this GitHub repository or link a local checkout.
 
-**Current fork version:** `0.6.73-local.10` (based on upstream `0.6.72`).
+**Current fork version:** `0.6.73-local.11` (based on upstream `0.6.72`).
 
 <p align="center">
   <a href="https://github.com/Shadrous/dsh-subscriptions"><img src="https://img.shields.io/badge/GitHub-Shadrous%2Fdsh--subscriptions-181717.svg?style=for-the-badge&logo=github&labelColor=1a1a2e" alt="GitHub repository"></a>
@@ -19,7 +19,8 @@ The upstream plugin is excellent; this fork keeps the same vendor bridges and ad
 
 - **Grok prompt caching** — a stable `prompt_cache_key` per session and `input_tokens_details.cached_tokens` parsing, so Grok cache hits show up instead of staying at 0%.
 - **Antigravity login** — uses the public AGY OAuth client with the `http://localhost:51121/oauth-callback` redirect, and the loopback listener binds both IPv4 and IPv6 (`localhost` is often `::1` on Fedora).
-- **Antigravity quota** — reads the real quota-summary buckets (Gemini and Claude/GPT `5h`/weekly windows) from the same daily backend the Antigravity CLI uses, instead of collapsing the account to a single synthetic 0%. The production host returns only the Claude/GPT group for consumer accounts, which used to hide Gemini usage. A `0%` reading is a live “full” reading; hover the pill for the reset countdown.
+- **Antigravity quota** — reads the real quota buckets from the same daily backend the Antigravity CLI uses. It merges `retrieveUserQuotaSummary` (Claude/GPT weekly + 5h) with `retrieveUserQuota` (live per-model buckets, including the Gemini 5h window), because Google sometimes drops the Gemini group from the summary response. A `0%` reading is a live “full” reading; hover the pill for the reset countdown.
+- **Gemini thinking effort** — `Gemini 3.8 Flash` and `Gemini 3.7 Flash` appear once in the picker with a low/medium/high thinking selector. Legacy ids such as `gemini-3.8-flash-high` still work for existing chats; new requests map the selected effort to the model's `-tiered` backend id.
 - **Cost-meter pricing** — registers Antigravity model price references with `dsh-cost-meter`, so Gemini/Claude/GPT calls are priced instead of showing “No priced cost”. Existing user overrides win, and new calls are priced automatically.
 - **Header pill** — follows the open chat's selected model, shows only the caps the vendor actually reports, orders them `5h → W → M`, refreshes while visible, and **disappears when the chat is not on a subscription provider**.
 - **Grok cap labels** — the weekly cap is labelled `W`, not the structural `config` key.
@@ -143,7 +144,8 @@ Click the pill for the account modal: connected accounts, cooldowns, quota bars,
 
 ## Quota and cost readings
 
-- **Quota** comes from the vendor's live quota summary. Antigravity reports four buckets (Gemini and Claude/GPT, each with `5h` and weekly), and the plugin reads them from `daily-cloudcode-pa.googleapis.com` — the same host the stream and the Antigravity CLI use. The production `cloudcode-pa` host returns only the Claude/GPT group on consumer accounts, so querying it made Gemini chats look unused while the real Gemini windows were being consumed. The pill now filters those four buckets to the open model's family. A `0%` pill value means 0% used / 100% remaining, not missing data; hover the pill to see the reset countdown.
+- **Quota** comes from the vendor's live quota buckets on `daily-cloudcode-pa.googleapis.com` — the same host the stream and the Antigravity CLI use. `retrieveUserQuotaSummary` normally reports the Claude/GPT weekly and 5-hour windows; Google has started returning that group without the Gemini group for some consumer accounts. The plugin therefore also reads `retrieveUserQuota`, whose per-model buckets still carry the live Gemini 5-hour window, and merges the two sources. The pill filters the result to the open model's family. A `0%` pill value means 0% used / 100% remaining, not missing data; hover the pill for the reset countdown.
+- If Google's summary response returns a Gemini weekly bucket again, the merge keeps it automatically. While the summary omits Gemini, only the live Gemini 5-hour cap is available; the weekly Gemini cap is not exposed by that API, so the CLI's weekly number may come from its own quota cache.
 - **Cost** is owned by `dsh-cost-meter`, not this plugin. When both plugins are installed, this fork registers Antigravity model price references (`antigravity:gemini-3.8-flash-high` → `google:gemini-3.8-flash`, and equivalents for the other Gemini/Claude models). New calls are priced automatically, and existing user price overrides are preserved.
 - Cost-meter does not retroactively reprice recorded calls. To update the cost of previous Antigravity calls, open **Settings → Cost → Historical pricing**, choose `antigravity:gemini-3.8-flash-high`, and run **Recalculate this model**. The operation keeps the original amounts and writes a ledger backup.
 
@@ -251,6 +253,14 @@ This fork used one 30s deadline for both the wait before the first response byte
 **A turn says `HTTP 500` and mentions `QUOTA_SERVICE`, but the quota pill shows plenty left**
 
 That is a Google **quota-service outage**, not an exhausted subscription. The 500 response contains `"reason": "QUOTA_SERVICE"` and `validating quota: generic::internal`, and the old error classifier saw the word `quota` and turned it into a `RATE_LIMIT`, parking the account for an hour. A 5xx is now classified as transient: the same account is retried twice with a short backoff and is never quarantined. If the backend keeps failing, the turn reports the transient error and the next attempt starts immediately instead of waiting for a cooldown.
+
+**The Gemini weekly cap disappeared from the pill**
+
+Google's `retrieveUserQuotaSummary` response has started omitting the Gemini group for some consumer accounts, leaving only Claude/GPT. The plugin now merges that summary with `retrieveUserQuota`, whose per-model buckets still expose the Gemini 5-hour window, so the pill recovers the live 5-hour cap. The weekly Gemini cap is not in either response while the summary is incomplete; it reappears automatically when Google restores the group.
+
+**The model picker still shows `gemini-3.8-flash-high` / `-medium` / `-low` as separate models**
+
+Those are the upstream catalog ids. The fork now collapses `Gemini 3.8 Flash` and `Gemini 3.7 Flash` into one picker entry with a low/medium/high thinking selector, and maps the selected effort to the `-tiered` backend id. Existing chats pinned to a suffixed id keep working. If your picker still shows the old entries, restart `dsh web` so the host reloads the vendor module; a browser refresh alone is not enough.
 
 ---
 
